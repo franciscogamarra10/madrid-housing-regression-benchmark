@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this benchmark, please cite it as below."
+title: "Madrid Housing Price Regression Benchmark"
+authors:
+  - family-names: Gamarra
+    given-names: Francisco
+version: "1.0.0"
+date-released: "2026-10-14"
+url: "https://github.com/franciscogamarra10/madrid-housing-regression-benchmark"
+license: MIT
+abstract: >
+  Empirical comparison of custom feature pipelines, Skrub, AutoGluon and FLAML
+  on Madrid residential listing prices. Shows that a compact FLAML DataTransformer
+  plus default LightGBM outperforms AutoGluon best_quality on RMSE while being
+  ~126× smaller and ~19× faster at inference.
+keywords:
+  - automl
+  - feature-engineering
+  - lightgbm
+  - flaml
+  - autogluon
+  - tabular-ml
+  - benchmark
+  - housing-prices
