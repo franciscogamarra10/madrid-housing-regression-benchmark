@@ -172,12 +172,14 @@ pip install feature-engine optuna catboost skrub "flaml[automl]" "autogluon.tabu
 import joblib
 
 bundle = joblib.load("madrid_final_bundle.joblib")
-
 def predict_pipeline(df, bundle):
     X = df[bundle["feature_names_in"]].copy()
     X_fe = bundle["transformer"].transform(X)
-    # encode categoricals to integer codes if needed
+    for col in X_fe.columns:
+        if isinstance(X_fe[col].dtype, pd.CategoricalDtype) or X_fe[col].dtype == 'object':
+            X_fe[col] = X_fe[col].astype('category').cat.codes
     return bundle["model"].predict(X_fe)
+
 
 preds = predict_pipeline(new_df, bundle)
 ```
