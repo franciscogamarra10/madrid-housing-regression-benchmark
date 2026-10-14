@@ -82,7 +82,11 @@ AutoGluon `best_quality` and FLAML are both strong AutoML frameworks. On this da
 
 The heavy framework loses on both accuracy and deployment. Its cost does not buy anything here — the extra 10 minutes of compute goes into bagging and stacking that the feature space does not need.
 
-### 6. Neural networks did not close the gap
+## Bonus findings
+
+Two additional experiments were run for completeness. Neither changes the final recommendation, but both are informative about what does *not* move the needle on this dataset.
+
+### Bonus A. Neural networks did not close the gap
 
 Four neural architectures were trained on the same preprocessed features, with early stopping and best-checkpoint restoration:
 
@@ -105,6 +109,26 @@ Three reasons for the gap on this dataset:
 This is consistent with the broader literature: on tabular regression with <50k rows and mixed feature types, boosted trees beat neural networks by a large margin, and it is not close. Adding a neural net to the ensemble did not improve the result either — the weight assigned by any meta-learner converges to zero.
 
 The practical implication: on this class of problem, spending time on neural architecture is a net loss. The same hours invested in trying a different feature transformer return 10,000+ RMSE. The order of operations matters.
+
+### Bonus B. GBDT implementations are not interchangeable either
+
+Even with identical features and "reasonable" hyperparameters, the four major GBDT libraries diverge significantly on this dataset:
+
+| Model | R² | RMSE | Notes |
+|---|---|---|---|
+| LightGBM | 0.9983 | 34,270 | Best-calibrated defaults for this feature space |
+| CatBoost | 0.9976 | 40,181 | Undertrained at `lr=0.1, iterations=1200` |
+| HistGB (sklearn) | 0.9963 | 49,851 | Competitive but slower to fit |
+| XGBoost | 0.9959 | 52,779 | Over-regularized at default `min_child_weight=1, reg_lambda=1` |
+
+The spread is not noise — XGBoost's RMSE is 54% higher than LightGBM's on the same inputs. Two factors explain most of it:
+
+- **Categorical handling.** The feature matrix contains columns encoded as ordinal codes. LightGBM treats them natively as categoricals with its histogram split; XGBoost treats them as continuous integers unless `enable_categorical=True` is set, which biases the splits.
+- **Regularization defaults.** XGBoost ships with `reg_lambda=1` and `min_child_weight=1`. On a feature space this wide, those defaults are too aggressive. LightGBM's `min_child_samples=20` and no default regularization fit this dataset's signal-to-noise ratio better out of the box.
+
+CatBoost and HistGB sit between them. Both are competitive with modest tuning; neither matches LightGBM's defaults on this problem without it.
+
+The practical takeaway: "GBDT" is not a single algorithm. The defaults of each implementation are tuned for different data regimes, and on any given dataset one of them will be better calibrated than the others. Trying two or three before committing costs a few minutes; assuming they are equivalent can cost 50% of your accuracy.
 
 ---
 
